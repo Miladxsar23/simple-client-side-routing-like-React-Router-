@@ -4,39 +4,46 @@ import { createBrowserHistory } from "history";
  * Create a context object for the router components that contains an object with two values history and location
  */
 const RouterContext = React.createContext();
+ /* For Outlet components, we need a context to access the children of Route in element */
+const RouteContext = React.createContext();
 
 /**
  * Link component for navigate between routes
  */
 
-class Link extends Component {
-  static contextType = RouterContext;
-  handleClick = (evt) => {
-    evt.preventDefault();
-    const { history } = this.context;
-    const to = evt.target.href;
-    history.push(to);
-  };
-  render() {
-    return (
-      <a className={this.props.className} href={this.props.to} onClick={this.handleClick}>
-        {this.props.children}
-      </a>
-    );
-  }
+const Link = ({to, children, ...props}) => {
+  return (
+    <RouterContext.Consumer>
+      {({history}) => {
+        return (
+          <a
+            href={to}
+            onClick = {() => {
+              history.push(to)
+            }}
+            {...props}
+          >
+          {children}
+          </a>
+        )
+      }}
+    </RouterContext.Consumer>
+  )
 }
 
 /**
  * Route Component
  */
 
-const Route = ({ path, element }) => {
+const Route = ({path, element, children}) => {
   return (
     <RouterContext.Consumer>
-      {({ location }) => location.pathname.match(path) && element}
+      {({location}) => {
+        return location.pathname.match(path) && <RouteContext.Provider value={{children}}>{element}</RouteContext.Provider>
+      }}
     </RouterContext.Consumer>
-  );
-};
+  )
+}
 
 /**
  * Navigate Component
@@ -83,4 +90,12 @@ class BrowserRouter extends Component {
   }
 }
 
+/*Outlet Component*/
+const Outlet = () => {
+  return (
+  <RouteContext.Consumer>
+    {({children}) => children} 
+  </RouteContext.Consumer>
+  )
+}
 export { Link, Navigate, Route, BrowserRouter };
